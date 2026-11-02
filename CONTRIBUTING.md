@@ -130,3 +130,7 @@ event has a matching change on screen, so nothing is heard without also being se
 3. The tag runs [`release.yml`](.github/workflows/release.yml), which builds the binaries for every
    platform and attaches them to that release. It waits for the release to exist and never creates
    one.
+
+## Using AI
+
+AI tools are welcome within the [AI policy](https://github.com/zacesshq/.github/blob/main/AI_POLICY.md). **Every pull request must say how AI was used, even when the answer is None.** Write your own issue and pull request titles and descriptions, understand everything you submit and test it before you open it.
