@@ -51,8 +51,9 @@ the key lines are checked by the tests in `src/`.
     in words, with Shift or Option when needed. The keyboard follows the layout in use (UK Mac, UK
     PC or US), found from the system, so the hints match the keys under the player's fingers. A
     missed key is marked `^` underneath, never by blinking.
-  - Learn to Code marks the blank being typed into with `▸`, marks right answers `✓` and wrong ones
-    `✗` and explains every mistake in words.
+  - Learn to Code marks the blank being typed into with `▸` and the cursor inside it with a thin
+    bar `▏`, marks right answers `✓` and wrong ones `✗`, ticks the levels done in the level list
+    and explains every mistake in words.
 - **Plain glyphs.** `--basic` swaps the geometric shapes for ASCII stand-ins. The same happens on its
   own in a console known to lack them (the Linux console and the classic Windows console).
 

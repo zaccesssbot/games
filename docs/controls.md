@@ -67,7 +67,7 @@ While paused, any key that is not a sound key carries on. The right end of the s
 | Array Guard | `←` `→` (or `H` `L` or `A` `D`) move. `↑` or `F` or `Enter` fires |
 | Heatsink | Every character types; letters match in either case. `Backspace` takes back a letter. `Tab` switches calm mode. `Enter` ends a calm round |
 | Touch Typing | Every character types exactly. `Backspace` takes back a key. `←` `→` choose an unlocked lesson. `Enter` moves on when a lesson is done. `F2` switches the keyboard layout |
-| Learn to Code | Every character types into the marked blank. `Backspace` deletes. `Tab` or `↓` goes to the next blank and `↑` the one before. `Enter` checks, then moves on. `F2` shows a hint. `F3` shows the answer after three tries. `F4` chooses a language |
+| Learn to Code | Every character types into the marked blank at the cursor `▏`. `←` `→` move the cursor, `Home` and `End` jump to the ends of the blank, `Backspace` deletes before the cursor and `Delete` after it. `Tab` or `↓` goes to the next blank and `↑` the one before. `Enter` checks, then moves on. `PgUp` and `PgDn` go to the previous level and the next level reached. `F2` shows a hint. `F3` shows the answer after three tries. `F4` chooses a language. In the track list `→` opens the level list, where `Enter` opens any level reached and `←` goes back |
 
 ## Flags
 
@@ -83,7 +83,7 @@ While paused, any key that is not a sound key carries on. The right end of the s
 | `--colour <truecolour or 256>` | How colours reach the terminal |
 | `--basic` | Plain characters for fonts without geometric shapes |
 | `--layout <uk-mac or uk-pc or us>` | The keyboard layout Touch Typing teaches on, for this run |
-| `--headless <game> --keys <keys> --size <W>x<H>` | Plays keys without a terminal and prints the screen as text |
+| `--headless <game> --keys <keys> --size <W>x<H>` | Plays keys without a terminal and prints the screen as text. Keys are words split by commas: `up`, `down`, `left`, `right`, `home`, `end`, `pgup`, `pgdn`, `enter`, `tab`, `space`, `bs`, `del`, `esc`, `f1`, `ctrlc`, any single character and `wait:<seconds>` after a key |
 | `snap --theme all --out <dir>` | Stills for every theme into a folder |
 | `snap --frames <n> --fps <1 to 30>` | Frames of a recording at that rate, 10 a second unless set |
 | `snap <game> --frames <n> --keys <keys>` | Frames of one game playing those keys instead of its recording |
@@ -133,7 +133,7 @@ The games are drawn in a Zacess theme picked in this order: `--theme`, then `ZAC
 
 ## Settings and records
 
-The effects and music levels and whether each is muted are remembered between runs. So are the best scores, the Termle streak, the Touch Typing lessons unlocked and keyboard layout and the Learn to Code progress for each language. They live in `~/.local/state/zacess-games/scores.txt` (`$XDG_STATE_HOME/zacess-games` when that is set and `%LOCALAPPDATA%\zacess-games` on Windows), one `key value` pair a line. A flag or variable wins over a remembered setting for that run.
+The effects and music levels and whether each is muted are remembered between runs. So are the best scores, the Termle streak, the Touch Typing lessons unlocked and keyboard layout and the Learn to Code progress for each language. They live in `~/.local/state/zacess-games/scores.txt` (`$XDG_STATE_HOME/zacess-games` when that is set and `%LOCALAPPDATA%\zacess-games` on Windows), one `key value` pair a line. Every key is listed in [the scores file](scores.md). A flag or variable wins over a remembered setting for that run.
 
 Sound and music files are made once and kept in `~/Library/Caches/zacess-games` on macOS, `~/.cache/zacess-games` on Linux and `%LOCALAPPDATA%\zacess-games` on Windows. They are safe to delete; they are made again when needed.
 

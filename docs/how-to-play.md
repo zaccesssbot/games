@@ -15,7 +15,7 @@ The rules of every game in Zacess Games: the goal, the rules, the scoring, how a
 - [Array Guard](#array-guard): clear debris from a dish array
 - [Heatsink](#heatsink): type terms to cool a chip
 - [Touch Typing](#touch-typing): learn to type by touch
-- [Learn to Code](#learn-to-code): code in Python, Java and C
+- [Learn to Code](#learn-to-code): fifteen tracks from first steps to job-ready
 
 ## Stackline
 
@@ -513,16 +513,17 @@ Learn to program from first steps to job-ready, one idea at a time. There are tr
 
 ### Rules
 
-- Pick a track with ↑ and ↓ and press Enter. The list is your progress overview: each track shows how many levels are done. Each remembers where you got to.
-- Every level has a short lesson and a few lines of code with blanks, shown as [ ]. Type into the blank that is marked ▸; Tab moves to the next blank.
-- Enter checks your answers. Spaces outside quotes never matter. When everything is right the program's output is shown and Enter goes on to the next level.
+- Pick a track with ↑ and ↓ and press Enter to carry on where you got to. → opens the track's level list, where any level you have reached can be opened again. The track list is your progress overview: each track shows how many levels are done.
+- Every level has a short lesson and a few lines of code with blanks, shown as [ ]. Type into the blank that is marked ▸. The thin bar ▏ is the cursor: ← and → move it, Home and End jump to the ends of the blank. Tab moves to the next blank.
+- Enter checks your answers. Spaces outside quotes never matter. When everything is right the program's output is shown with a Try it line (the command that runs the code in a shell) and Enter goes on to the next level.
 - A wrong answer gets a message that explains the mistake. F2 shows a hint. After three tries F3 shows the answer.
+- PgUp goes back a level and PgDn forward to a level you have reached, so nothing is skipped. A level played again keeps its tick and scores nothing more.
 - Code is checked inside the game against the answers each level lists. Nothing you type is ever run on the computer.
 - F4 goes back to choose another language.
 
 ### Scoring
 
-100 points for each level solved without the answer shown, less 20 for each wrong try, never below 20.
+100 points for each level solved the first time without the answer shown, less 20 for each wrong try, never below 20.
 
 ### Winning and losing
 
@@ -530,9 +531,9 @@ There is no losing. A track is complete when its last level is solved. The langu
 
 ### Keys
 
-- Every character types, the space included. Backspace deletes.
-- Tab moves to the next blank. Enter checks, then moves on.
-- F2 hint. F3 show the answer after three tries. F4 choose a language.
+- Every character types, the space included. Backspace deletes before the cursor and Delete after it.
+- ← → move the cursor. Home and End jump to the ends of the blank. Tab moves to the next blank and ↑ to the one before. Enter checks, then moves on.
+- PgUp previous level. PgDn next level. F2 hint. F3 show the answer after three tries. F4 choose a language. In the track list → opens the level list and ← closes it.
 
 Every character is typed, the space and symbols included, so `Esc` pauses instead. While paused the sound keys work as in the other games and `Q` leaves. `F1` opens the How to play page. `Ctrl+C` always leaves.
 

@@ -276,7 +276,7 @@ impl Game for Relay {
                 self.step(0, 0, fx);
                 fx.say("Waited a move");
             }
-            Key::Backspace | Key::Char('u' | 'U') => {
+            Key::Backspace | Key::Delete | Key::Char('u' | 'U') => {
                 if let Some(s) = self.history.pop() {
                     self.state = s;
                 }

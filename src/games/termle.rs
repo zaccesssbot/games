@@ -386,7 +386,7 @@ impl Game for Termle {
                     fx.sound(Sfx::Tick);
                 }
             }
-            Key::Backspace => {
+            Key::Backspace | Key::Delete => {
                 if self.typing.pop().is_some() {
                     fx.sound(Sfx::Tick);
                 }

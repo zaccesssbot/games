@@ -527,7 +527,7 @@ impl Game for TouchTyping {
     fn key(&mut self, key: Key, fx: &mut Fx) {
         match key {
             Key::Char(c) => self.type_char(c, fx),
-            Key::Backspace if self.result.is_none() => {
+            Key::Backspace | Key::Delete if self.result.is_none() => {
                 if self.typed.pop().is_some() {
                     fx.sound(Sfx::Tick);
                 }

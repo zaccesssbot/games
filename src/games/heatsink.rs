@@ -259,7 +259,7 @@ impl Game for Heatsink {
     fn key(&mut self, key: Key, fx: &mut Fx) {
         match key {
             Key::Char(c) => self.type_char(c, fx),
-            Key::Backspace => {
+            Key::Backspace | Key::Delete => {
                 if let Some(t) = self.target {
                     let d = &mut self.drops[t];
                     d.typed = d.typed.saturating_sub(1);

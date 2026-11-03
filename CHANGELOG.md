@@ -6,9 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-03
+
+### Added
+
+- Learn to Code edits inside a blank. The thin bar `▏` is the cursor: `←` and `→` move it, `Home` and `End` jump to the ends, a typed character goes in at the cursor, `Backspace` deletes before it and `Delete` after it. A blank still holds 40 characters at most.
+- Learn to Code moves between levels. `PgUp` opens the level before and `PgDn` the level after, as far as the track's progress reaches, so no level is skipped. `→` on a track in the track list opens its level list, with the levels done ticked, the next one marked and the rest shown as locked. `Enter` there opens any level reached again.
+- A Try it line after every solved Learn to Code level: the shell command that runs that language, such as `python3 main.py` or `go run main.go`, with the file to save the code as. The game itself still runs nothing.
+- `docs/scores.md`, the reference for the scores file: where it lives, its format and every key the games write.
+- `packaging/` with the Homebrew formula template and the winget manifests, with the steps a maintainer follows after a release.
+- `home`, `end`, `del`, `pgup` and `pgdn` as key words for `--keys` and recordings.
+
 ### Changed
 
+- `zacess-games` is published to crates.io, so `cargo install --locked zacess-games` works without a git tag. Zacess Scenes comes from crates.io too (0.6) instead of a git tag. The README's install section covers Homebrew, winget, Cargo and the release archives per platform, with a diagram of how a game is drawn.
+- A Learn to Code level played again keeps its tick and scores nothing more; the 100 points are for the first solve.
 - Community files follow the [AI policy](https://github.com/zacesshq/.github/blob/main/AI_POLICY.md): pull requests declare AI use and issue forms ask whether AI helped. Security reports go to security@zacess.com.
+- Routine tidy-up.
 
 ## [0.2.0] - 2026-10-29
 
@@ -38,6 +52,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - `docs/how-to-play.md` and `docs/controls.md` for every game and every key, flag, variable and setting, with 47 stills in `docs/images` that `scripts/snapshots.sh` makes again from the program.
 - CI: markdown linting, formatting, Clippy, the tests and a headless run of every game on Linux, macOS and Windows, a check that the stills are current, the release target builds, a check on the minimum Rust version (1.88) and a release workflow that attaches built binaries to the release a maintainer makes from a signed tag.
 
-[Unreleased]: https://github.com/zacesshq/games/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/zacesshq/games/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/zacesshq/games/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/zacesshq/games/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/zacesshq/games/releases/tag/v0.1.0

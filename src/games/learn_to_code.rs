@@ -4,8 +4,10 @@
 //! out, so nothing typed is ever run as a program. A wrong answer gets a message that teaches:
 //! one written for that mistake when the level has one, otherwise a check for the usual slips
 //! (missing quotes, brackets that do not pair, = for ==, the wrong case). After three tries the
-//! answer can be shown. Tracks live in Lua files, progress is saved for each language and new
-//! tracks or levels can be added in `~/.config/zacess/games/learn-to-code`.
+//! answer can be shown. Once a level is solved a "Try it" line gives the shell command that runs
+//! the code outside the game. Tracks live in Lua files, progress is saved for each language, any
+//! level already reached can be opened again from the track's level list and new tracks or levels
+//! can be added in `~/.config/zacess/games/learn-to-code`.
 
 use mlua::{Table, Value};
 
@@ -22,25 +24,26 @@ pub const INFO: Info = Info {
     icon: ('λ', 'L'),
     hue: Hue::Property,
     blurb: "fifteen tracks, first steps on",
-    hints: "Type in the blank · Tab next blank · Enter check · F2 hint",
+    hints: "Type in the blank · ← → cursor · Tab next blank · Enter check · F2 hint · PgDn next level",
     help: &[
         "# Goal",
         "Learn to program from first steps to job-ready, one idea at a time. There are tracks for Python, Java, C, C++, JavaScript, TypeScript, SQL, Bash and Linux, Git, Rust, Go, C# and Kotlin, a shared Data Structures and Algorithms track and an AI track in Python.",
         "# Rules",
-        "- Pick a track with ↑ and ↓ and press Enter. The list is your progress overview: each track shows how many levels are done. Each remembers where you got to.",
-        "- Every level has a short lesson and a few lines of code with blanks, shown as [ ]. Type into the blank that is marked ▸; Tab moves to the next blank.",
-        "- Enter checks your answers. Spaces outside quotes never matter. When everything is right the program's output is shown and Enter goes on to the next level.",
+        "- Pick a track with ↑ and ↓ and press Enter to carry on where you got to. → opens the track's level list, where any level you have reached can be opened again. The track list is your progress overview: each track shows how many levels are done.",
+        "- Every level has a short lesson and a few lines of code with blanks, shown as [ ]. Type into the blank that is marked ▸. The thin bar ▏ is the cursor: ← and → move it, Home and End jump to the ends of the blank. Tab moves to the next blank.",
+        "- Enter checks your answers. Spaces outside quotes never matter. When everything is right the program's output is shown with a Try it line (the command that runs the code in a shell) and Enter goes on to the next level.",
         "- A wrong answer gets a message that explains the mistake. F2 shows a hint. After three tries F3 shows the answer.",
+        "- PgUp goes back a level and PgDn forward to a level you have reached, so nothing is skipped. A level played again keeps its tick and scores nothing more.",
         "- Code is checked inside the game against the answers each level lists. Nothing you type is ever run on the computer.",
         "- F4 goes back to choose another language.",
         "# Scoring",
-        "100 points for each level solved without the answer shown, less 20 for each wrong try, never below 20.",
+        "100 points for each level solved the first time without the answer shown, less 20 for each wrong try, never below 20.",
         "# Winning and losing",
         "There is no losing. A track is complete when its last level is solved. The language list shows how many levels each language has done.",
         "# Keys",
-        "- Every character types, the space included. Backspace deletes.",
-        "- Tab moves to the next blank. Enter checks, then moves on.",
-        "- F2 hint. F3 show the answer after three tries. F4 choose a language.",
+        "- Every character types, the space included. Backspace deletes before the cursor and Delete after it.",
+        "- ← → move the cursor. Home and End jump to the ends of the blank. Tab moves to the next blank and ↑ to the one before. Enter checks, then moves on.",
+        "- PgUp previous level. PgDn next level. F2 hint. F3 show the answer after three tries. F4 choose a language. In the track list → opens the level list and ← closes it.",
         "Tip: read the expected output under the code first; it tells you what each blank must do.",
     ],
     input: Input::Text,
@@ -331,9 +334,55 @@ pub fn judge(blank: &Blank, typed: &str, rules: Rules) -> Option<String> {
     Some("Not quite: that would not give the output shown. F2 shows a hint.".into())
 }
 
+/// The shell command that runs a level's code once it is saved, by track id. The game never runs
+/// it; the line is there to paste after a level is solved. `None` for a track it does not know.
+pub fn try_it(track_id: &str) -> Option<String> {
+    let (file, run) = match track_id {
+        "python" | "ai" | "dsa" => ("main.py", "python3 main.py"),
+        "java" => ("Main.java", "java Main.java"),
+        "c" => ("main.c", "cc main.c -o main && ./main"),
+        "cpp" => ("main.cpp", "c++ main.cpp -o main && ./main"),
+        "javascript" => ("main.js", "node main.js"),
+        "typescript" => ("main.ts", "npx tsx main.ts"),
+        "bash" => ("main.sh", "bash main.sh"),
+        "rust" => ("main.rs", "rustc main.rs && ./main"),
+        "go" => ("main.go", "go run main.go"),
+        "kotlin" => (
+            "main.kt",
+            "kotlinc main.kt -include-runtime -d main.jar && java -jar main.jar",
+        ),
+        "csharp" => {
+            return Some(
+                "Try it: dotnet new console -o sandbox, save the code as sandbox/Program.cs, then in a shell: cd sandbox && dotnet run".into(),
+            );
+        }
+        "sql" => {
+            return Some("Try it: sqlite3 parts.db, then paste each line at the prompt".into());
+        }
+        "git" => {
+            return Some(
+                "Try it: git init sandbox && cd sandbox, then run each line in turn".into(),
+            );
+        }
+        _ => return None,
+    };
+    Some(format!(
+        "Try it: save the code as {file}, then in a shell: {run}"
+    ))
+}
+
+/// The byte offset of the character `cursor` characters into `text`; the end when there are fewer.
+fn byte_at(text: &str, cursor: usize) -> usize {
+    text.char_indices()
+        .nth(cursor)
+        .map_or(text.len(), |(i, _)| i)
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Screen {
     Choose,
+    /// The chosen track's levels, with the ones done ticked.
+    Levels,
     Level,
     Solved,
 }
@@ -348,6 +397,10 @@ pub struct LearnToCode {
     pub level: usize,
     pub typed: Vec<String>,
     pub blank: usize,
+    /// Where the next character goes in the current blank, in characters.
+    pub cursor: usize,
+    /// The row chosen in the level list.
+    pick: usize,
     tries: u32,
     shown: bool,
     feedback: Option<(bool, String)>,
@@ -367,6 +420,8 @@ impl LearnToCode {
             level: 0,
             typed: Vec::new(),
             blank: 0,
+            cursor: 0,
+            pick: 0,
             tries: 0,
             shown: false,
             feedback: None,
@@ -383,6 +438,7 @@ impl LearnToCode {
         let blanks = self.current().map_or(0, |l| l.blanks.len());
         self.typed = vec![String::new(); blanks];
         self.blank = 0;
+        self.cursor = 0;
         self.tries = 0;
         self.shown = false;
         self.feedback = None;
@@ -395,6 +451,51 @@ impl LearnToCode {
         self.open_level(at);
     }
 
+    /// Opens the chosen track's level list on the level that comes next.
+    fn open_levels(&mut self) {
+        let len = self.tracks[self.track].levels.len();
+        self.pick = self.done[self.track].min(len.saturating_sub(1));
+        self.screen = Screen::Levels;
+    }
+
+    /// Whether a level of the chosen track is open to play: every level done and the one after.
+    fn reached(&self, level: usize) -> bool {
+        level < self.tracks[self.track].levels.len() && level <= self.done[self.track]
+    }
+
+    /// Moves to the level before or after this one, as far as progress allows.
+    fn step_level(&mut self, forward: bool, fx: &mut Fx) {
+        let target = if forward {
+            Some(self.level + 1)
+        } else {
+            self.level.checked_sub(1)
+        };
+        match target {
+            Some(level) if self.reached(level) => {
+                self.open_level(level);
+                fx.sound(Sfx::Tap);
+            }
+            Some(_) if forward => {
+                let why = if self.level + 1 < self.tracks[self.track].levels.len() {
+                    "Solve this level to reach the next one."
+                } else {
+                    "This is the last level of the track."
+                };
+                self.feedback = Some((false, why.into()));
+                fx.sound(Sfx::Low);
+            }
+            _ => {
+                self.feedback = Some((false, "This is the first level of the track.".into()));
+                fx.sound(Sfx::Low);
+            }
+        }
+    }
+
+    /// Puts the cursor at the end of the current blank, where typing carries on.
+    fn cursor_to_end(&mut self) {
+        self.cursor = self.typed.get(self.blank).map_or(0, |t| t.chars().count());
+    }
+
     pub fn check(&mut self, fx: &mut Fx) {
         let Some(level) = self.current().cloned() else {
             return;
@@ -404,6 +505,7 @@ impl LearnToCode {
             if let Some(why) = judge(b, &self.typed[i], quotes) {
                 self.tries += 1;
                 self.blank = i;
+                self.cursor_to_end();
                 let more = if self.tries >= TRIES_BEFORE_ANSWER {
                     " F3 shows the answer."
                 } else {
@@ -414,10 +516,11 @@ impl LearnToCode {
                 return;
             }
         }
-        if !self.shown {
+        let t = self.track;
+        // a level opened again from the list keeps its tick and scores nothing more
+        if !self.shown && self.level >= self.done[t] {
             self.score += 100u64.saturating_sub(20 * u64::from(self.tries)).max(20);
         }
-        let t = self.track;
         self.done[t] = self.done[t].max(self.level + 1);
         self.feedback = Some((true, "Correct. The program prints the output below.".into()));
         self.screen = Screen::Solved;
@@ -464,8 +567,35 @@ impl Game for LearnToCode {
                     self.begin_track();
                     fx.sound(Sfx::Tap);
                 }
+                Key::Right => {
+                    self.open_levels();
+                    fx.sound(Sfx::Tap);
+                }
                 _ => {}
             },
+            Screen::Levels => {
+                let len = self.tracks[self.track].levels.len().max(1);
+                match key {
+                    Key::Up => {
+                        self.pick = (self.pick + len - 1) % len;
+                        fx.sound(Sfx::Tick);
+                    }
+                    Key::Down | Key::Tab => {
+                        self.pick = (self.pick + 1) % len;
+                        fx.sound(Sfx::Tick);
+                    }
+                    Key::Enter => {
+                        if self.reached(self.pick) {
+                            self.open_level(self.pick);
+                            fx.sound(Sfx::Tap);
+                        } else {
+                            fx.sound(Sfx::Low);
+                        }
+                    }
+                    Key::Left | Key::F(4) => self.screen = Screen::Choose,
+                    _ => {}
+                }
+            }
             Screen::Solved => match key {
                 Key::Enter => {
                     let len = self.tracks[self.track].levels.len();
@@ -476,35 +606,74 @@ impl Game for LearnToCode {
                     }
                     fx.sound(Sfx::Tap);
                 }
+                Key::PageUp => self.step_level(false, fx),
+                Key::PageDown => self.step_level(true, fx),
                 Key::F(4) => self.screen = Screen::Choose,
                 _ => {}
             },
             Screen::Level => match key {
                 Key::Char(c) => {
+                    let cursor = self.cursor;
                     if let Some(t) = self.typed.get_mut(self.blank)
                         && t.chars().count() < 40
                     {
-                        t.push(c);
+                        t.insert(byte_at(t, cursor), c);
+                        self.cursor += 1;
                         fx.sound(Sfx::Tick);
                     }
                 }
                 Key::Backspace => {
-                    if let Some(t) = self.typed.get_mut(self.blank)
-                        && t.pop().is_some()
+                    let cursor = self.cursor;
+                    if cursor > 0
+                        && let Some(t) = self.typed.get_mut(self.blank)
                     {
+                        let at = byte_at(t, cursor - 1);
+                        if at < t.len() {
+                            t.remove(at);
+                            self.cursor -= 1;
+                            fx.sound(Sfx::Tick);
+                        }
+                    }
+                }
+                Key::Delete => {
+                    let cursor = self.cursor;
+                    if let Some(t) = self.typed.get_mut(self.blank) {
+                        let at = byte_at(t, cursor);
+                        if at < t.len() {
+                            t.remove(at);
+                            fx.sound(Sfx::Tick);
+                        }
+                    }
+                }
+                Key::Left => {
+                    if self.cursor > 0 {
+                        self.cursor -= 1;
                         fx.sound(Sfx::Tick);
                     }
                 }
+                Key::Right => {
+                    let len = self.typed.get(self.blank).map_or(0, |t| t.chars().count());
+                    if self.cursor < len {
+                        self.cursor += 1;
+                        fx.sound(Sfx::Tick);
+                    }
+                }
+                Key::Home => self.cursor = 0,
+                Key::End => self.cursor_to_end(),
                 Key::Tab | Key::Down => {
                     if !self.typed.is_empty() {
                         self.blank = (self.blank + 1) % self.typed.len();
+                        self.cursor_to_end();
                     }
                 }
                 Key::Up => {
                     if !self.typed.is_empty() {
                         self.blank = (self.blank + self.typed.len() - 1) % self.typed.len();
+                        self.cursor_to_end();
                     }
                 }
+                Key::PageUp => self.step_level(false, fx),
+                Key::PageDown => self.step_level(true, fx),
                 Key::Enter => self.check(fx),
                 Key::F(2) => {
                     if let Some(b) = self.current().and_then(|l| l.blanks.get(self.blank)) {
@@ -517,6 +686,7 @@ impl Game for LearnToCode {
                         if let Some(l) = self.current().cloned() {
                             self.typed = l.blanks.iter().map(|b| b.answers[0].clone()).collect();
                         }
+                        self.cursor_to_end();
                         self.shown = true;
                         self.check(fx);
                         self.feedback = Some((
@@ -611,7 +781,70 @@ impl Game for LearnToCode {
                 c.text(
                     r.x + 2,
                     b.y + b.h,
-                    "↑ ↓ choose · Enter start or carry on",
+                    "↑ ↓ choose · Enter start or carry on · → the level list",
+                    pal.muted,
+                );
+            }
+            return;
+        }
+        if self.screen == Screen::Levels {
+            // the chosen track's levels: done ones ticked, the next marked, the rest locked
+            let track = &self.tracks[self.track];
+            let n = track.levels.len() as i32;
+            let rows = (area.h - 5).max(3);
+            let shown = n.min(rows);
+            let first = (self.pick as i32 - shown / 2).clamp(0, (n - shown).max(0));
+            let b = Rect::new(r.x, r.y, r.w, shown + 4);
+            let done = self.done[self.track];
+            c.titled(
+                b,
+                Line::Heavy,
+                pal.property,
+                &format!("{} · {done} of {n} levels done", track.language),
+                pal.bright,
+            );
+            for (row, i) in (first..first + shown).enumerate() {
+                let i = i as usize;
+                let level = &track.levels[i];
+                let y = b.y + 2 + row as i32;
+                let chosen = i == self.pick;
+                let reached = self.reached(i);
+                c.put(
+                    b.x + 2,
+                    y,
+                    if chosen { g('▶', '>') } else { ' ' },
+                    pal.bright,
+                );
+                let (mark, colour) = if i < done {
+                    (g('✓', '+'), pal.green)
+                } else if reached {
+                    (g('▸', '>'), pal.property)
+                } else {
+                    (g('·', '-'), pal.muted)
+                };
+                c.put(b.x + 4, y, mark, colour);
+                let text: String = format!("{:>2}  {} · {}", i + 1, level.name, level.topic)
+                    .chars()
+                    .take((b.w - 8).max(0) as usize)
+                    .collect();
+                c.text(
+                    b.x + 6,
+                    y,
+                    &text,
+                    if chosen {
+                        pal.bright
+                    } else if reached {
+                        pal.text
+                    } else {
+                        pal.muted
+                    },
+                );
+            }
+            if b.y + b.h < r.y + r.h {
+                c.text(
+                    r.x + 2,
+                    b.y + b.h,
+                    "↑ ↓ choose · Enter open a reached level · ← back to the tracks",
                     pal.muted,
                 );
             }
@@ -649,30 +882,33 @@ impl Game for LearnToCode {
                     let i = k - 1;
                     let active = i == self.blank && self.screen == Screen::Level;
                     let typed = &self.typed[i];
-                    let shown = if typed.is_empty() {
-                        "   ".to_string()
-                    } else {
-                        typed.clone()
-                    };
                     if active {
+                        // the thin bar is the cursor; an empty blank keeps its three spaces so
+                        // the bar sits where the text will go
                         c.put(x, y, g('▸', '>'), pal.bright);
+                        let (before, after) = if typed.is_empty() {
+                            ("   ", "")
+                        } else {
+                            typed.split_at(byte_at(typed, self.cursor))
+                        };
+                        c.text(x + 1, y, before, pal.bright);
+                        x += 1 + before.chars().count() as i32;
+                        c.put(x, y, '▏', pal.bright);
+                        x += 1;
+                        c.text(x, y, after, pal.bright);
+                        x += after.chars().count() as i32;
                     } else {
+                        let shown = if typed.is_empty() {
+                            "   "
+                        } else {
+                            typed.as_str()
+                        };
                         c.put(x, y, '[', pal.property);
+                        c.text(x + 1, y, shown, pal.property);
+                        x += 1 + shown.chars().count() as i32;
+                        c.put(x, y, ']', pal.property);
+                        x += 1;
                     }
-                    c.text(
-                        x + 1,
-                        y,
-                        &shown,
-                        if active { pal.bright } else { pal.property },
-                    );
-                    x += 1 + shown.chars().count() as i32;
-                    c.put(
-                        x,
-                        y,
-                        if active { '▏' } else { ']' },
-                        if active { pal.bright } else { pal.property },
-                    );
-                    x += 1;
                     rest = &rest[open + len + 1..];
                 } else {
                     c.text(x, y, rest, pal.keyword);
@@ -711,6 +947,20 @@ impl Game for LearnToCode {
                         pal.text
                     },
                 );
+            }
+        }
+        if self.screen == Screen::Solved
+            && let Some(try_it) = try_it(&track.id)
+        {
+            y += level.output.len() as i32 + 2;
+            for (i, line) in crate::ui::wrap(&try_it, (r.w - 4) as usize)
+                .iter()
+                .take(2)
+                .enumerate()
+            {
+                if y + (i as i32) < r.y + r.h {
+                    c.text(r.x + 2, y + i as i32, line, pal.text);
+                }
             }
         }
     }
@@ -975,6 +1225,139 @@ mod tests {
         again.restore(&scores);
         again.key(Key::Enter, &mut fx);
         assert_eq!(again.level, 1);
+    }
+
+    fn type_in(g: &mut LearnToCode, text: &str, fx: &mut Fx) {
+        for ch in text.chars() {
+            g.key(Key::Char(ch), fx);
+        }
+    }
+
+    #[test]
+    fn the_cursor_moves_and_edits_inside_a_blank() {
+        let mut g = game();
+        let mut fx = Fx::default();
+        g.key(Key::Enter, &mut fx);
+        type_in(&mut g, "Hllo", &mut fx);
+        assert_eq!(g.cursor, 4);
+        g.key(Key::Home, &mut fx);
+        g.key(Key::Right, &mut fx);
+        g.key(Key::Char('e'), &mut fx);
+        assert_eq!(g.typed[0], "Hello");
+        assert_eq!(g.cursor, 2);
+        g.key(Key::End, &mut fx);
+        g.key(Key::Char('!'), &mut fx);
+        g.key(Key::Backspace, &mut fx);
+        assert_eq!(g.typed[0], "Hello");
+        g.key(Key::Home, &mut fx);
+        g.key(Key::Delete, &mut fx);
+        assert_eq!(g.typed[0], "ello");
+        g.key(Key::Backspace, &mut fx);
+        assert_eq!(g.typed[0], "ello", "nothing before the cursor to delete");
+        g.key(Key::Left, &mut fx);
+        assert_eq!(g.cursor, 0, "the cursor stops at the start");
+        g.key(Key::Char('H'), &mut fx);
+        g.key(Key::Left, &mut fx);
+        g.key(Key::Left, &mut fx);
+        assert_eq!(g.cursor, 0, "the cursor never goes before the start");
+        g.key(Key::End, &mut fx);
+        g.key(Key::Right, &mut fx);
+        assert_eq!(g.cursor, 5, "the cursor stops at the end");
+        g.key(Key::Char('é'), &mut fx);
+        g.key(Key::Left, &mut fx);
+        g.key(Key::Char('x'), &mut fx);
+        assert_eq!(
+            g.typed[0], "Helloxé",
+            "editing counts characters, not bytes"
+        );
+        for _ in 0..50 {
+            g.key(Key::Char('z'), &mut fx);
+        }
+        assert_eq!(
+            g.typed[0].chars().count(),
+            40,
+            "a blank holds 40 characters at most"
+        );
+    }
+
+    #[test]
+    fn page_up_and_page_down_step_between_reached_levels() {
+        let mut g = game();
+        let mut fx = Fx::default();
+        g.key(Key::Enter, &mut fx);
+        g.key(Key::PageDown, &mut fx);
+        assert_eq!(
+            g.level, 0,
+            "the next level is not reached before this one is solved"
+        );
+        assert!(g.feedback.as_ref().is_some_and(|(good, _)| !good));
+        g.key(Key::PageUp, &mut fx);
+        assert_eq!(g.level, 0, "there is nothing before the first level");
+        type_in(&mut g, "\"Hello, world\"", &mut fx);
+        g.key(Key::Enter, &mut fx);
+        assert_eq!(g.screen, Screen::Solved);
+        g.key(Key::PageDown, &mut fx);
+        assert_eq!((g.level, g.screen), (1, Screen::Level));
+        g.key(Key::PageDown, &mut fx);
+        assert_eq!(g.level, 1, "level three is not reached yet");
+        g.key(Key::PageUp, &mut fx);
+        assert_eq!((g.level, g.screen), (0, Screen::Level));
+        assert_eq!(g.typed[0], "", "a level opens fresh");
+    }
+
+    #[test]
+    fn a_reached_level_can_be_opened_again_from_the_level_list() {
+        let mut g = game();
+        let mut fx = Fx::default();
+        g.key(Key::Enter, &mut fx);
+        type_in(&mut g, "\"Hello, world\"", &mut fx);
+        g.key(Key::Enter, &mut fx);
+        assert_eq!((g.done[0], g.score), (1, 100));
+        g.key(Key::F(4), &mut fx);
+        assert_eq!(g.screen, Screen::Choose);
+        g.key(Key::Right, &mut fx);
+        assert_eq!(
+            (g.screen, g.pick),
+            (Screen::Levels, 1),
+            "the list opens on the next level"
+        );
+        g.key(Key::Down, &mut fx);
+        g.key(Key::Enter, &mut fx);
+        assert_eq!(g.screen, Screen::Levels, "a level not reached stays shut");
+        g.key(Key::Up, &mut fx);
+        g.key(Key::Up, &mut fx);
+        assert_eq!(g.pick, 0);
+        g.key(Key::Enter, &mut fx);
+        assert_eq!((g.screen, g.level), (Screen::Level, 0));
+        type_in(&mut g, "\"Hello, world\"", &mut fx);
+        g.key(Key::Enter, &mut fx);
+        assert_eq!(g.screen, Screen::Solved);
+        assert_eq!(
+            (g.done[0], g.score),
+            (1, 100),
+            "a level played again scores nothing more"
+        );
+        g.key(Key::F(4), &mut fx);
+        g.key(Key::Right, &mut fx);
+        g.key(Key::Left, &mut fx);
+        assert_eq!(g.screen, Screen::Choose, "left closes the list");
+    }
+
+    #[test]
+    fn every_built_in_track_has_a_try_it_line() {
+        let (tracks, _) = load();
+        for t in &tracks {
+            let line = try_it(&t.id).unwrap_or_else(|| panic!("{} has no Try it line", t.id));
+            assert!(line.starts_with("Try it: "), "{line}");
+        }
+        assert_eq!(
+            try_it("python").as_deref(),
+            Some("Try it: save the code as main.py, then in a shell: python3 main.py")
+        );
+        assert!(try_it("java").unwrap().contains("java Main.java"));
+        assert!(try_it("c").unwrap().contains("cc main.c"));
+        assert!(try_it("javascript").unwrap().contains("node main.js"));
+        assert_eq!(try_it("cobol"), None);
     }
 
     #[test]

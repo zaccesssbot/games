@@ -1,7 +1,15 @@
 # Zacess Games
 
 Fourteen original games for the terminal, drawn in the eight [Zacess](https://zacess.com) high
-contrast themes. Each game is written in Rust with its levels in Lua and is built on
+contrast themes.
+
+[![CI](https://github.com/zacesshq/games/actions/workflows/ci.yml/badge.svg)](https://github.com/zacesshq/games/actions/workflows/ci.yml)
+[![Markdown Lint](https://github.com/zacesshq/games/actions/workflows/markdownlint.yml/badge.svg)](https://github.com/zacesshq/games/actions/workflows/markdownlint.yml)
+[![Release](https://img.shields.io/github/v/release/zacesshq/games?label=release)](https://github.com/zacesshq/games/releases/latest)
+[![crates.io](https://img.shields.io/crates/v/zacess-games?label=crates.io)](https://crates.io/crates/zacess-games)
+[![Licence: MIT](https://img.shields.io/badge/licence-MIT-green.svg)](LICENSE)
+
+Each game is written in Rust with its levels in Lua and is built on
 [Zacess Scenes](https://github.com/zacesshq/scenes), so the games share the scenes' themes,
 contrast floors, flash limit and reduced motion.
 
@@ -50,7 +58,7 @@ Every game is its own design. None copies an existing game's rules, board or goa
 | [Array Guard](docs/how-to-play.md#array-guard) | Clear drifting debris to protect five satellite dishes, with shields, capsules and waves |
 | [Heatsink](docs/how-to-play.md#heatsink) | Type electronics terms and code fragments before they reach a chip and heat it, with a calm mode |
 | [Touch Typing](docs/how-to-play.md#touch-typing) | A trainer from the home row to timed tests, with an on-screen keyboard showing the finger for every key. It follows the keyboard in use (UK Mac, UK PC or US), read from the system |
-| [Learn to Code](docs/how-to-play.md#learn-to-code) | Fifteen tracks from first steps to job-ready: Python, Java, C, C++, JavaScript, TypeScript, SQL, Bash and Linux, Git, Rust, Go, C#, Kotlin, Data Structures and Algorithms and AI in Python. Fill in small programs with hints, teaching messages and saved progress |
+| [Learn to Code](docs/how-to-play.md#learn-to-code) | Fifteen tracks from first steps to job-ready: Python, Java, C, C++, JavaScript, TypeScript, SQL, Bash and Linux, Git, Rust, Go, C#, Kotlin, Data Structures and Algorithms and AI in Python. Fill in small programs with hints, teaching messages, saved progress, a level list to go back to any level reached and a Try it line that runs the code in a shell |
 
 Every still is Zacess Deep Contrast Dark at 100 by 30, part way through a game.
 
@@ -73,19 +81,54 @@ flash meter, so it never changes a large area more than three times a second. Th
 recording plays are in [`scripts/recordings.txt`](scripts/recordings.txt) and
 `scripts/snapshots.sh` makes the stills and the frames again from the program.
 
-## Install
+## How it works
 
-### With Cargo
-
-The games are not on crates.io, so Cargo installs them from a release tag here:
-
-```sh
-cargo install --locked --git https://github.com/zacesshq/games --tag v0.2.0 zacess-games
+```mermaid
+flowchart LR
+    Keys["Keys from the terminal<br>or a --keys script"] --> Game["One game's rules<br>in Rust"]
+    Levels["Levels in Lua<br>levels/ and ~/.config"] --> Game
+    Theme["Zacess theme<br>from Scenes"] --> Frame
+    Game --> Frame["Frame of coloured text"]
+    Frame --> Meter["Flash meter<br>from Scenes"]
+    Meter --> Terminal["Terminal"]
+    Meter --> Still["SVG still<br>docs/images"]
+    Meter --> Frames["JSON frames<br>docs/frames"]
+    Game --> Scores["scores.txt<br>best scores and progress"]
 ```
 
-Rust 1.88 or later and a C compiler, since Lua 5.4 is built into the program. Sound is played by
-the system's own player (`afplay` on macOS, PipeWire, PulseAudio or ALSA on Linux and PowerShell on
-Windows), so nothing else is needed.
+Every key goes to one game's rules, which read their levels from Lua. The game draws a frame of
+coloured text in the theme Scenes provides and every frame passes the flash meter before it reaches
+the terminal, an SVG still or the JSON frames the website plays. Best scores and progress go to one
+plain text file.
+
+## Install
+
+The games are one program, `zacess-games`. Sound is played by the system's own player (`afplay` on
+macOS, PipeWire, PulseAudio or ALSA on Linux and PowerShell on Windows), so nothing else is needed.
+
+> [!NOTE]
+> The Homebrew tap and the winget package follow the 0.3.0 release. Until each is live, Cargo or a
+> release archive works on every platform.
+
+### macOS and Linux with Homebrew
+
+```sh
+brew install zacesshq/tap/zacess-games
+```
+
+### Windows with winget
+
+```powershell
+winget install Zacess.Games
+```
+
+### Any platform with Cargo
+
+```sh
+cargo install --locked zacess-games
+```
+
+Rust 1.88 or later and a C compiler, since Lua 5.4 is built into the program.
 
 ### From a release
 
@@ -103,8 +146,8 @@ Each archive has a `.sha256` file beside it and holds the guides as well as the 
 sum, unpack the archive and put `zacess-games` (or `zacess-games.exe`) somewhere on your `PATH`.
 
 ```sh
-shasum -a 256 -c zacess-games-v0.2.0-aarch64-apple-darwin.tar.gz.sha256
-tar -xzf zacess-games-v0.2.0-aarch64-apple-darwin.tar.gz
+shasum -a 256 -c zacess-games-v0.3.0-aarch64-apple-darwin.tar.gz.sha256
+tar -xzf zacess-games-v0.3.0-aarch64-apple-darwin.tar.gz
 ```
 
 ## Documentation
@@ -113,6 +156,7 @@ tar -xzf zacess-games-v0.2.0-aarch64-apple-darwin.tar.gz
 | --- | --- |
 | [How to play](docs/how-to-play.md) | The goal, rules, scoring, winning and losing, a tip and the keys of every game, with a still of each |
 | [Controls](docs/controls.md) | Every key, command, flag, variable, setting and window size on one sheet |
+| [Scores file](docs/scores.md) | Where best scores, streaks, progress and settings are kept and what every line means |
 | [Accessibility](ACCESSIBILITY.md) | What the games do on screen, in sound and at the keyboard |
 | [Contributing](CONTRIBUTING.md) | How a change is made, the checks, adding a game and releasing |
 
@@ -136,7 +180,8 @@ game. Nothing typed is ever run as a program.
 Best scores, the Termle streak, the Touch Typing lessons unlocked, the Learn to Code progress for
 each language and the sound settings live in `~/.local/state/zacess-games/scores.txt`
 (`$XDG_STATE_HOME/zacess-games` when that is set and `%LOCALAPPDATA%\zacess-games` on Windows). One
-`key value` pair a line, so the file can be read or cleared by hand.
+`key value` pair a line, so the file can be read or cleared by hand. Every key is listed in
+[docs/scores.md](docs/scores.md).
 
 ## Accessibility
 

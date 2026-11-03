@@ -389,7 +389,7 @@ impl Game for Trace {
         }
         match key {
             Key::Tab | Key::Enter => self.cycle_pen(),
-            Key::Backspace | Key::Char('u' | 'U') => self.undo(),
+            Key::Backspace | Key::Delete | Key::Char('u' | 'U') => self.undo(),
             Key::Char('r' | 'R') => {
                 self.start();
                 fx.say("Restarted");
