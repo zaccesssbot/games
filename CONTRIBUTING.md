@@ -122,16 +122,17 @@ event has a matching change on screen, so nothing is heard without also being se
 
 ## Releasing
 
-1. Bump the version in `Cargo.toml` (and `Cargo.lock` by running `cargo build`), move the
-   changelog's `Unreleased` entries into a section for the version, move the README's checksum
-   example to the new tag and merge that through a pull request.
+1. Bump `version` in `Cargo.toml` (and `Cargo.lock` by running `cargo build`), move the
+   changelog's `Unreleased` entries into a section for the version, move the version in the
+   README's checksum example, the Homebrew formula and the winget manifests under `packaging/`
+   and merge that through a pull request.
 2. A maintainer tags the merged commit with a signed annotated tag, pushes it and creates the
    GitHub release from the tag with that version's changelog section as the notes.
 3. The tag runs [`release.yml`](.github/workflows/release.yml), which builds the binaries for every
    platform and attaches them to that release. It waits for the release to exist and never creates
    one.
-4. A maintainer publishes the crate to crates.io and updates the Homebrew tap and the winget
-   package from the templates in [`packaging/`](packaging/README.md).
+4. The crates.io, Homebrew and winget steps in [packaging/README.md](packaging/README.md) follow,
+   each run by a maintainer.
 
 ## Using AI
 

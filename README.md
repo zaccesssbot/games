@@ -107,7 +107,7 @@ The games are one program, `zacess-games`. Sound is played by the system's own p
 macOS, PipeWire, PulseAudio or ALSA on Linux and PowerShell on Windows), so nothing else is needed.
 
 > [!NOTE]
-> The Homebrew tap and the winget package follow the 0.3.0 release. Until each is live, Cargo or a
+> The Homebrew tap and the winget package follow the 0.4.0 release. Until each is live, Cargo or a
 > release archive works on every platform.
 
 ### macOS and Linux with Homebrew
@@ -146,8 +146,8 @@ Each archive has a `.sha256` file beside it and holds the guides as well as the 
 sum, unpack the archive and put `zacess-games` (or `zacess-games.exe`) somewhere on your `PATH`.
 
 ```sh
-shasum -a 256 -c zacess-games-v0.3.0-aarch64-apple-darwin.tar.gz.sha256
-tar -xzf zacess-games-v0.3.0-aarch64-apple-darwin.tar.gz
+shasum -a 256 -c zacess-games-v0.4.0-aarch64-apple-darwin.tar.gz.sha256
+tar -xzf zacess-games-v0.4.0-aarch64-apple-darwin.tar.gz
 ```
 
 ## Documentation

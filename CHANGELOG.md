@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-04
+
+### Changed
+
+- The Homebrew formula and the winget manifests under `packaging/` are kept at the current version with one `SHA256_` placeholder per platform, named after the release target. `packaging/fill-checksums.sh` writes copies with the sums from a release's `.sha256` files filled in. The packaging and release steps in `packaging/README.md` and `CONTRIBUTING.md` follow.
+
 ## [0.3.0] - 2026-11-03
 
 ### Added
@@ -52,7 +58,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - `docs/how-to-play.md` and `docs/controls.md` for every game and every key, flag, variable and setting, with 47 stills in `docs/images` that `scripts/snapshots.sh` makes again from the program.
 - CI: markdown linting, formatting, Clippy, the tests and a headless run of every game on Linux, macOS and Windows, a check that the stills are current, the release target builds, a check on the minimum Rust version (1.88) and a release workflow that attaches built binaries to the release a maintainer makes from a signed tag.
 
-[Unreleased]: https://github.com/zacesshq/games/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/zacesshq/games/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/zacesshq/games/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/zacesshq/games/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/zacesshq/games/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/zacesshq/games/releases/tag/v0.1.0
